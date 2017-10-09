@@ -10,9 +10,8 @@ namespace TagsEdit
     {
         static void Main(string[] args)
         {
-            var neval = TagLib.File.Create("D:/MusicTest/neval.mp3");
-            Console.WriteLine(neval.Tag.Album);
-            Console.ReadKey();
+            var controller = new Controller();
+            controller.Start();
         }
     }
 }
