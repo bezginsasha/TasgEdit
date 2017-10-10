@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TagsEdit
 {
@@ -20,7 +17,7 @@ namespace TagsEdit
                         Console.WriteLine("All");
                         break;
                     case "one":
-                        Console.WriteLine("One");
+                        One();
                         break;
                     case "help":
                         Console.WriteLine("Help");
@@ -28,11 +25,23 @@ namespace TagsEdit
                     case "config":
                         Console.WriteLine("Config");
                         break;
+                    case "exit":
+                        return; // Это не точно, но здесь может появиться ошибка
                     default:
                         Console.WriteLine("Error");
                         break;
                 }
             }
+        }
+
+        private void One()
+        {
+            var music = new Music(@"D:\MusicTest\neval.mp3");
+            music.SetName("Неваляшка");
+            music.SetAuthor("Oxxxymiron");
+            music.SetCover(@"D:\MusicTest\cover.jpg");
+            music.SetAlbum("Долгий путь домой");
+            music.Save();
         }
 
         private List<string> SelectWords(string s)
