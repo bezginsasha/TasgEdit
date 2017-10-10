@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace TagsEdit
 {
@@ -11,13 +13,15 @@ namespace TagsEdit
             while (true)
             {
                 var words = SelectWords(Console.ReadLine());
+                if (words.Count == 1)
+                    words.Add("");
                 switch (words[0])
                 {
                     case "all":
-                        Console.WriteLine("All");
+                        All(words[1]);
                         break;
                     case "one":
-                        One();
+                        One(words[1]);
                         break;
                     case "help":
                         Console.WriteLine("Help");
@@ -34,14 +38,57 @@ namespace TagsEdit
             }
         }
 
-        private void One()
+        private void All(string s)
         {
-            var music = new Music(@"D:\MusicTest\neval.mp3");
-            music.SetName("Неваляшка");
-            music.SetAuthor("Oxxxymiron");
-            music.SetCover(@"D:\MusicTest\cover.jpg");
-            music.SetAlbum("Долгий путь домой");
+            Console.Clear();
+            Console.Write("Режим редактирования папки\nНазвание: ");
+            var name = Console.ReadLine();
+            Console.Write("Альбом: ");
+            var album = Console.ReadLine();
+            Console.Write("Исполнитель: ");
+            var author = Console.ReadLine();
+            Console.Write("Путь обложки: ");
+            var cover = Console.ReadLine();
+            DirectoryInfo dir = new DirectoryInfo(s);
+
+
+            var music = new Music();
+            music.SetName(name);
+            music.SetAuthor(author);
+            music.SetCover(cover);
+            music.SetAlbum(album);
+            foreach (var i in dir.GetFiles())
+                if (new Regex(".mp3").IsMatch(i.Name))
+                {
+                    music.SetPath(i.FullName);
+                    music.Save();
+                }
+
+            Console.Clear();
+            Console.WriteLine("Всё готово!");
+        }
+
+        private void One(string s)
+        {
+            Console.Clear();
+            Console.Write("Режим редактирования одной песни\nНазвание: ");
+            var name = Console.ReadLine();
+            Console.Write("Альбом: ");
+            var album = Console.ReadLine();
+            Console.Write("Исполнитель: ");
+            var author = Console.ReadLine();
+            Console.Write("Путь обложки: ");
+            var cover = Console.ReadLine();
+
+            var music = new Music(s);
+            music.SetName(name);
+            music.SetAuthor(author);
+            music.SetCover(cover);
+            music.SetAlbum(album);
             music.Save();
+
+            Console.Clear();
+            Console.WriteLine("Готово!");
         }
 
         private List<string> SelectWords(string s)
@@ -51,7 +98,7 @@ namespace TagsEdit
             var start = 0;
             var end = 0;
             for (var i = 0; i < s.Length; i++)
-                if (s[i]==' ')
+                if (s[i] == ' ')
                 {
                     end = i - 1;
                     words.Add(s.Substring(start, end - start + 1).ToLower());

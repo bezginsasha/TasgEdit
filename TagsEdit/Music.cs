@@ -14,6 +14,9 @@ namespace TagsEdit
         {
             music = File.Create(s);
         }
+        public Music()
+        {
+        }
 
         public void SetName(string s)
         {
