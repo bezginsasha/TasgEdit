@@ -50,7 +50,7 @@ namespace TagsEdit
             music.Tag.Pictures = pictures;
 
             music.Tag.Album = album;
-            
+
             string[] performers = new string[1];
             performers[0] = author;
             music.Tag.Performers = performers;
