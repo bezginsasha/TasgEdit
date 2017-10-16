@@ -32,7 +32,7 @@ namespace TagsEdit
         }
 
         public void Start()
-        {            
+        {
             Console.WriteLine("Добро пожаловать в TagsEdit");
             while (true)
             {
@@ -73,7 +73,7 @@ namespace TagsEdit
 
         private void Add(string s)
         {
-            using (var reader=new StreamReader("config.txt", Encoding.UTF8))
+            using (var reader = new StreamReader("config.txt", Encoding.UTF8))
             {
                 var list = new List<string>();
                 while (!reader.EndOfStream)
@@ -81,8 +81,8 @@ namespace TagsEdit
                     {
                         Console.WriteLine("Такой параметр уже есть");
                         return;
-                    }                
-            }            
+                    }
+            }
         }
 
         private void Config()
@@ -108,25 +108,25 @@ namespace TagsEdit
 
         private void Smart(string s)
         {
-            DirectoryInfo dir;
-            if (directory == "")
-                dir = new DirectoryInfo(s);
-            else
-                dir = new DirectoryInfo(directory);
+            //Дирректория
+            var dir = GetDir(s);
 
+            //Консоль
             Console.Clear();
             Console.WriteLine("Умный режим");
 
+            //Задаётся основа тэгов
             var music = new Music();
-            var author=SetAuthor(music);
+            var author = SetAuthor(music);
             SetAlbum(music);
+            SetYear(music);
             SetCover(music, dir);
 
+            //Задаются индиидуальные теги и сохраняются изменения
             foreach (var i in dir.GetFiles())
                 if (new Regex(".mp3").IsMatch(i.Name))
                 {
-                    var name = GetName(i.Name);
-                    music.SetName(name);
+                    var name = SetName(music, GetName(i.Name));
                     music.SetPath(i.FullName);
                     music.Save();
 
@@ -134,46 +134,61 @@ namespace TagsEdit
 
                     File.Move(i.FullName, newPath);
                 }
+
+            //Консоль
+            Console.Clear();
             Console.WriteLine("Всё готово!");
         }
 
         private void SetDir(string s)
         {
+            //Сложно комментировать две строчки
             directory = s;
             Console.WriteLine("Директория задана");
         }
 
         private void All(string s)
         {
+            //Дирректория
+            var dir = GetDir(s);
+
+            //Консоль
             Console.Clear();
-            Console.Write("Режим редактирования папки");
-            var name = Console.ReadLine();
-            Console.Write("Альбом: ");
-            var album = Console.ReadLine();
-            //Console.Write("Исполнитель: ");
-            //var author = Console.ReadLine();
-            
-            Console.Write("Путь обложки: ");
-            var cover = Console.ReadLine();
-            DirectoryInfo dir;
-            if (directory == "")
-                dir = new DirectoryInfo(s);
-            else
-                dir = new DirectoryInfo(directory);
+            Console.WriteLine("Режим редактирования папки, общие тэги:");
 
-
+            //Задаются общие тэги
             var music = new Music();
-            music.SetName(name);
-            //music.SetAuthor(author);
-            music.SetCover(cover);
-            music.SetAlbum(album);
+            var author = SetAuthor(music);
+            SetAlbum(music);
+            SetYear(music);
+            SetCover(music, dir);
+
+            //Задаются индивидуальные тэги
+            Console.WriteLine("\nНазвания песен:");
             foreach (var i in dir.GetFiles())
+            {
+                var l = i.Name.Length;
                 if (new Regex(".mp3").IsMatch(i.Name))
                 {
+                    Console.WriteLine("\nФайл: {0}", i.Name);
+                    var name = SetName(music);
                     music.SetPath(i.FullName);
                     music.Save();
-                }
 
+                    var newPath = i.Directory + "/" + author + " - " + name + ".mp3";
+
+                    try
+                    {
+                        File.Move(i.FullName, newPath);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Вы хотите сделать 2 одинаковых файла. Точное исключение: {0}", e);
+                    }
+                }
+            }
+
+            //Консоль
             Console.Clear();
             Console.WriteLine("Всё готово!");
         }
@@ -181,7 +196,7 @@ namespace TagsEdit
         private void One(string s)
         {
             Console.Clear();
-            Console.Write("Режим редактирования одной песни\nНазвание: ");
+            Console.WriteLine("Режим редактирования одной песни");
             var name = Console.ReadLine();
             Console.Write("Альбом: ");
             var album = Console.ReadLine();
@@ -221,6 +236,7 @@ namespace TagsEdit
             return words;
         }
 
+        //Возвращает название песни отбрасывая всё лишнее в имени файла, используется в режиме смарт
         private string GetName(string s)
         {
             var start = 0;
@@ -302,12 +318,12 @@ namespace TagsEdit
             {
                 Console.Write("Название: ");
                 var s = Console.ReadLine();
-                m.SetAlbum(s);
+                m.SetName(s);
                 return s;
             }
             else
             {
-                m.SetAlbum("");
+                m.SetName("");
                 return "";
             }
         }
@@ -315,10 +331,26 @@ namespace TagsEdit
         private string SetName(Music m, string s)
         {
             if (properties["name"])
-                m.SetAlbum(s);
+                m.SetName(s);
             else
-                m.SetAlbum("");
+                m.SetName("");
             return s;
+        }
+
+        private int SetYear(Music m)
+        {
+            Console.Write("Год:  ");
+            var s = Console.ReadLine();
+            if (properties["year"])
+                m.SetYear(s);
+            else
+                m.SetYear("");
+            return Int32.Parse(s);
+        }
+
+        private DirectoryInfo GetDir(string s)
+        {
+            return directory == "" ? new DirectoryInfo(s) : new DirectoryInfo(directory);
         }
     }
 }

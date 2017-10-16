@@ -8,6 +8,7 @@ namespace TagsEdit
         private string author = "";
         private string album = "";
         private string cover = "";
+        private int year = 1900;
         private File music;
 
         public Music(string s)
@@ -43,6 +44,11 @@ namespace TagsEdit
             cover = s;
         }
 
+        public void SetYear(string s)
+        {
+            bool res = System.Int32.TryParse(s, out year);
+        }
+
         public void Save()
         {
             Picture[] pictures = new Picture[1];
@@ -56,6 +62,8 @@ namespace TagsEdit
             music.Tag.Performers = performers;
 
             music.Tag.Title = name;
+
+            music.Tag.Year = (uint)year;
 
             music.Save();
         }
