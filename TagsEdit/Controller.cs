@@ -2,15 +2,37 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace TagsEdit
 {
     class Controller
     {
         private string directory = "";
+        private Dictionary<string, bool> properties;
+
+        public Controller()
+        {
+            properties = new Dictionary<string, bool>();
+            List<string> options;
+            using (var reader = new StreamReader("config.txt", System.Text.Encoding.UTF8))
+            {
+                var list = new List<string>();
+                while (!reader.EndOfStream)
+                    list.Add(reader.ReadLine());
+                directory = list[list.Count - 1];
+                list.Remove(directory);
+                options = list;
+            }
+            foreach (var i in options)
+                if (i[0] == '/')
+                    properties.Add(i.Substring(2, i.Length - 2), false);
+                else
+                    properties.Add(i, true);
+        }
 
         public void Start()
-        {
+        {            
             Console.WriteLine("Добро пожаловать в TagsEdit");
             while (true)
             {
@@ -22,20 +44,23 @@ namespace TagsEdit
                     case "smart":
                         Smart(words[1]);
                         break;
-                    case "setdir":
-                        SetDir(words[1]);
-                        break;
                     case "all":
                         All(words[1]);
                         break;
                     case "one":
                         One(words[1]);
                         break;
+                    case "setdir":
+                        SetDir(words[1]);
+                        break;
+                    case "add":
+                        Add(words[1]);
+                        break;
                     case "help":
                         Console.WriteLine("Help");
                         break;
                     case "config":
-                        Console.WriteLine("Config");
+                        Config();
                         break;
                     case "exit":
                         return; // Это не точно, но здесь может появиться ошибка
@@ -44,6 +69,41 @@ namespace TagsEdit
                         break;
                 }
             }
+        }
+
+        private void Add(string s)
+        {
+            using (var reader=new StreamReader("config.txt", Encoding.UTF8))
+            {
+                var list = new List<string>();
+                while (!reader.EndOfStream)
+                    if (reader.ReadLine() == s)
+                    {
+                        Console.WriteLine("Такой параметр уже есть");
+                        return;
+                    }                
+            }            
+        }
+
+        private void Config()
+        {
+            List<string> options;
+            string path;
+            using (var reader = new StreamReader("config.txt", System.Text.Encoding.UTF8))
+            {
+                var list = new List<string>();
+                while (!reader.EndOfStream)
+                    list.Add(reader.ReadLine());
+                path = list[list.Count - 1];
+                list.Remove(path);
+                options = list;
+            }
+            Console.Clear();
+            Console.WriteLine("Список тэгов:");
+            foreach (var i in options)
+                Console.WriteLine(i);
+            Console.WriteLine();
+            Console.WriteLine("path\n{0}", path);
         }
 
         private void Smart(string s)
@@ -55,26 +115,12 @@ namespace TagsEdit
                 dir = new DirectoryInfo(directory);
 
             Console.Clear();
-            Console.Write("Умный режим\nИсполнитель: ");
-            string author = Console.ReadLine();
-            Console.Write("Альбом: ");
-            string album = Console.ReadLine();
-
-            var cover = "";
-            foreach (var i in dir.GetFiles())
-                if ((new Regex(".jpg").IsMatch(i.Name)) || (new Regex(".png").IsMatch(i.Name)))
-                {
-                    cover = i.FullName;
-                    break;
-                }
+            Console.WriteLine("Умный режим");
 
             var music = new Music();
-            music.SetAuthor(author);
-            music.SetAlbum(album);
-            if (cover != "")
-                music.SetCover(cover);
-            else
-                return;
+            var author=SetAuthor(music);
+            SetAlbum(music);
+            SetCover(music, dir);
 
             foreach (var i in dir.GetFiles())
                 if (new Regex(".mp3").IsMatch(i.Name))
@@ -88,25 +134,25 @@ namespace TagsEdit
 
                     File.Move(i.FullName, newPath);
                 }
-
-            //foreach (var i in new DirectoryInfo("D:/musictest").GetFiles())
-            //    Console.WriteLine(GetName(i.Name));
+            Console.WriteLine("Всё готово!");
         }
 
         private void SetDir(string s)
         {
             directory = s;
+            Console.WriteLine("Директория задана");
         }
 
         private void All(string s)
         {
             Console.Clear();
-            Console.Write("Режим редактирования папки\nНазвание: ");
+            Console.Write("Режим редактирования папки");
             var name = Console.ReadLine();
             Console.Write("Альбом: ");
             var album = Console.ReadLine();
-            Console.Write("Исполнитель: ");
-            var author = Console.ReadLine();
+            //Console.Write("Исполнитель: ");
+            //var author = Console.ReadLine();
+            
             Console.Write("Путь обложки: ");
             var cover = Console.ReadLine();
             DirectoryInfo dir;
@@ -118,7 +164,7 @@ namespace TagsEdit
 
             var music = new Music();
             music.SetName(name);
-            music.SetAuthor(author);
+            //music.SetAuthor(author);
             music.SetCover(cover);
             music.SetAlbum(album);
             foreach (var i in dir.GetFiles())
@@ -203,6 +249,76 @@ namespace TagsEdit
                 }
 
             return res;
+        }
+
+        public void SetCover(Music m, DirectoryInfo dir)
+        {
+            var cover = "";
+            foreach (var i in dir.GetFiles())
+                if ((new Regex(".jpg").IsMatch(i.Name)) || (new Regex(".png").IsMatch(i.Name)))
+                {
+                    cover = i.FullName;
+                    break;
+                }
+            if (cover != "")
+                m.SetCover(cover);
+        }
+
+        private string SetAuthor(Music m)
+        {
+            if (properties["author"])
+            {
+                Console.Write("Испонитель: ");
+                var s = Console.ReadLine();
+                m.SetAuthor(s);
+                return s;
+            }
+            else
+            {
+                m.SetAuthor("");
+                return "";
+            }
+        }
+
+        private string SetAlbum(Music m)
+        {
+            if (properties["album"])
+            {
+                Console.Write("Альбом: ");
+                var s = Console.ReadLine();
+                m.SetAlbum(s);
+                return s;
+            }
+            else
+            {
+                m.SetAlbum("");
+                return "";
+            }
+        }
+
+        private string SetName(Music m)
+        {
+            if (properties["name"])
+            {
+                Console.Write("Название: ");
+                var s = Console.ReadLine();
+                m.SetAlbum(s);
+                return s;
+            }
+            else
+            {
+                m.SetAlbum("");
+                return "";
+            }
+        }
+
+        private string SetName(Music m, string s)
+        {
+            if (properties["name"])
+                m.SetAlbum(s);
+            else
+                m.SetAlbum("");
+            return s;
         }
     }
 }

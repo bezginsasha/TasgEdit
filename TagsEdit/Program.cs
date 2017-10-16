@@ -4,8 +4,7 @@
     {
         static void Main(string[] args)
         {
-            var controller = new Controller();
-            controller.Start();
+            new Controller().Start();
         }
     }
 }
