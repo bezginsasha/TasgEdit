@@ -13,7 +13,7 @@ namespace TagsEdit
 
         public Music(string s)
         {
-            music = File.Create(s);
+            music = File.Create(s);           
         }
         public Music()
         {

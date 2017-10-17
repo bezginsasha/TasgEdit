@@ -56,6 +56,9 @@ namespace TagsEdit
                     case "add":
                         Add(words[1]);
                         break;
+                    case "remove":
+                        Remove(words[1]);
+                        break;
                     case "help":
                         Console.WriteLine("Help");
                         break;
@@ -63,7 +66,7 @@ namespace TagsEdit
                         Config();
                         break;
                     case "exit":
-                        return; // Это не точно, но здесь может появиться ошибка
+                        return;
                     default:
                         Console.WriteLine("Error");
                         break;
@@ -73,16 +76,60 @@ namespace TagsEdit
 
         private void Add(string s)
         {
+            var list = new List<string>();
             using (var reader = new StreamReader("config.txt", Encoding.UTF8))
             {
-                var list = new List<string>();
                 while (!reader.EndOfStream)
-                    if (reader.ReadLine() == s)
-                    {
-                        Console.WriteLine("Такой параметр уже есть");
-                        return;
-                    }
+                    list.Add(reader.ReadLine());
             }
+            for (var i = 0; i < list.Count; i++)
+                if (list[i] == "//" + s)
+                {
+                    list[i] = list[i].Substring(2, list[i].Length - 3);
+                    Console.Clear();
+                    Console.WriteLine("Готово!");
+                    using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
+                    {
+                        foreach (var j in list)
+                            writer.WriteLine(j);
+                    }
+                    return;
+                }
+            Console.Clear();
+            Console.WriteLine("Свойство не найдено");
+        }
+
+        private void Remove(string s)
+        {
+            var list = new List<string>();
+            using (var reader = new StreamReader("config.txt", Encoding.UTF8))
+            {
+                while (!reader.EndOfStream)
+                    list.Add(reader.ReadLine());
+            }
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (list[i] == s)
+                {
+                    list[i] = "//" + list[i];
+                    Console.Clear();
+                    Console.WriteLine("Всё готово!");
+                    using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
+                    {
+                        foreach (var j in list)
+                            writer.WriteLine(j);
+                    }
+                    return;
+                }
+                if (list[i] == "//" + s)
+                {
+                    Console.Clear();
+                    Console.WriteLine("Свойство и так удалено");
+                    return;
+                }                    
+            }
+            Console.Clear();
+            Console.WriteLine("Свойство не найдено");
         }
 
         private void Config()
@@ -195,27 +242,52 @@ namespace TagsEdit
 
         private void One(string s)
         {
+            //Задаётся директория            
+            var dir = GetDir(s);
+
+            //Консоль
             Console.Clear();
-            Console.WriteLine("Режим редактирования одной песни");
-            var name = Console.ReadLine();
-            Console.Write("Альбом: ");
-            var album = Console.ReadLine();
-            Console.Write("Исполнитель: ");
-            var author = Console.ReadLine();
-            Console.Write("Путь обложки: ");
-            var cover = Console.ReadLine();
+            Console.WriteLine("Режим редактирования одной песни\nХотите посмотреть список файлов?(y/n)");
+            if (Console.ReadLine().ToLower() == "y")
+                foreach (var i in dir.GetFiles())
+                    Console.WriteLine(i.Name);
+            Console.WriteLine("Введите название файла");
 
+            //Переменные
+            var nameOfFile = Console.ReadLine();
             Music music;
-            if (directory == "")
-                music = new Music(s);
-            else
-                music = new Music(directory);
-            music.SetName(name);
-            music.SetAuthor(author);
-            music.SetCover(cover);
-            music.SetAlbum(album);
-            music.Save();
+            string name;
+            string author;
 
+            //Поиск файла и редактирование его тэгов           
+            foreach (var i in dir.GetFiles())
+                if ((i.Name == nameOfFile) || (i.Name.Substring(0, i.Name.Length - 4) == nameOfFile))
+                {
+                    Console.Clear();
+                    Console.WriteLine("Файл найден");
+                    music = new Music();
+                    name = SetName(music);
+                    author = SetAuthor(music);
+                    SetAlbum(music);
+                    SetCover(music, dir);
+                    SetYear(music);
+                    music.SetPath(i.FullName);
+                    music.Save();
+
+                    var newPath = i.Directory + "/" + author + " - " + name + ".mp3";
+
+                    try
+                    {
+                        File.Move(i.FullName, newPath);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Вы хотите сделать 2 одинаковых файла. Точное исключение: {0}", e);
+                        return;
+                    }
+                }
+
+            //Консоль
             Console.Clear();
             Console.WriteLine("Готово!");
         }
