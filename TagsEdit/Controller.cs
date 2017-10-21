@@ -13,16 +13,19 @@ namespace TagsEdit
 
         public Controller()
         {
+            UpdateConfig();
+        }
+
+        private void UpdateConfig()
+        {
             properties = new Dictionary<string, bool>();
-            List<string> options;
+            var options = new List<string>();
             using (var reader = new StreamReader("config.txt", System.Text.Encoding.UTF8))
             {
-                var list = new List<string>();
                 while (!reader.EndOfStream)
-                    list.Add(reader.ReadLine());
-                directory = list[list.Count - 1];
-                list.Remove(directory);
-                options = list;
+                    options.Add(reader.ReadLine());
+                directory = options[options.Count - 1];
+                options.Remove(directory);
             }
             foreach (var i in options)
                 if (i[0] == '/')
@@ -53,12 +56,6 @@ namespace TagsEdit
                     case "setdir":
                         SetDir(words[1]);
                         break;
-                    case "add":
-                        Add(words[1]);
-                        break;
-                    case "remove":
-                        Remove(words[1]);
-                        break;
                     case "help":
                         Console.WriteLine("Help");
                         break;
@@ -72,64 +69,6 @@ namespace TagsEdit
                         break;
                 }
             }
-        }
-
-        private void Add(string s)
-        {
-            //var list = new List<string>();
-            //using (var reader = new StreamReader("config.txt", Encoding.UTF8))
-            //{
-            //    while (!reader.EndOfStream)
-            //        list.Add(reader.ReadLine());
-            //}
-            //for (var i = 0; i < list.Count; i++)
-            //    if (list[i] == "//" + s)
-            //    {
-            //        list[i] = list[i].Substring(2, list[i].Length - 3);
-            //        Console.Clear();
-            //        Console.WriteLine("Готово!");
-            //        using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
-            //        {
-            //            foreach (var j in list)
-            //                writer.WriteLine(j);
-            //        }
-            //        return;
-            //    }
-            //Console.Clear();
-            //Console.WriteLine("Свойство не найдено");
-        }
-
-        private void Remove(string s)
-        {
-            //var list = new List<string>();
-            //using (var reader = new StreamReader("config.txt", Encoding.UTF8))
-            //{
-            //    while (!reader.EndOfStream)
-            //        list.Add(reader.ReadLine());
-            //}
-            //for (var i = 0; i < list.Count; i++)
-            //{
-            //    if (list[i] == s)
-            //    {
-            //        list[i] = "//" + list[i];
-            //        Console.Clear();
-            //        Console.WriteLine("Всё готово!");
-            //        using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
-            //        {
-            //            foreach (var j in list)
-            //                writer.WriteLine(j);
-            //        }
-            //        return;
-            //    }
-            //    if (list[i] == "//" + s)
-            //    {
-            //        Console.Clear();
-            //        Console.WriteLine("Свойство и так удалено");
-            //        return;
-            //    }
-            //}
-            //Console.Clear();
-            //Console.WriteLine("Свойство не найдено");
         }
 
         private void Config()
@@ -207,6 +146,7 @@ namespace TagsEdit
                 foreach (var i in list)
                     writer.WriteLine(i);
             }
+            UpdateConfig();
             Console.Clear();
             Console.WriteLine("Всё готово!");
         }
@@ -224,7 +164,11 @@ namespace TagsEdit
             var music = new Music();
             var author = SetAuthor(music);
             SetAlbum(music);
-            SetYear(music);
+            if (SetYear(music) == -1)
+            {
+                Console.WriteLine("Ошибка, введён некоректный год");
+                return;
+            }
             SetCover(music, dir);
 
             //Задаются индиидуальные теги и сохраняются изменения
@@ -245,21 +189,27 @@ namespace TagsEdit
             Console.WriteLine("Всё готово!");
         }
 
+        //Задаётся дирректория, в которой будут меняться файлы
         private void SetDir(string s)
         {
+            if (!new Regex(@"\w:[/|\\](\w*[\\|/])*\w*$", RegexOptions.Compiled | RegexOptions.IgnoreCase).IsMatch(s))
+            {
+                Console.WriteLine("Вы ввели некорректный путь");
+                return;
+            }
             var list = new List<string>();
             using (var reader = new StreamReader("config.txt", Encoding.UTF8))
             {
                 while (!reader.EndOfStream)
                     list.Add(reader.ReadLine());
             }
-            directory = s;
             list[list.Count - 1] = s;
             using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
             {
                 foreach (var i in list)
                     writer.WriteLine(i);
             }
+            UpdateConfig();
             Console.Clear();
             Console.WriteLine("Директория задана");
         }
@@ -340,7 +290,7 @@ namespace TagsEdit
                 }
             }
             //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
-            while (res!="yes");
+            while (res != "yes");
 
             //Редактирование тэгов
             var music = new Music();
@@ -358,53 +308,6 @@ namespace TagsEdit
 
             Console.Clear();
             Console.WriteLine("Всё готово!");
-        }
-
-        private List<string> SelectWords(string s)
-        {
-            var words = new List<string>();
-            s += ' ';
-            var start = 0;
-            var end = 0;
-            for (var i = 0; i < s.Length; i++)
-                if (s[i] == ' ')
-                {
-                    end = i - 1;
-                    words.Add(s.Substring(start, end - start + 1).ToLower());
-                    start = i + 1;
-                }
-            return words;
-        }
-
-        //Возвращает название песни отбрасывая всё лишнее в имени файла, используется в режиме смарт
-        private string GetName(string s)
-        {
-            var start = 0;
-            var end = 0;
-            for (var i = 0; i < s.Length; i++)
-            {
-                if (s[i] == '—')
-                    start = i + 1;
-                if (s[i] == '-')
-                    start = i + 1;
-                if (s[i] == '.')
-                    if (s[i + 1] == 'm')
-                        if (s[i + 2] == 'p')
-                            if (s[i + 3] == '3')
-                                end = i;
-            }
-            var res = s.Substring(start, end - start);
-
-            if (res.Length > 1)
-                while ((res[0] == ' ') || (res[res.Length - 1] == ' '))
-                {
-                    if (res[0] == ' ')
-                        res = res.Substring(1, res.Length - 1);
-                    if (res[res.Length - 1] == ' ')
-                        res = res.Substring(0, res.Length - 1);
-                }
-
-            return res;
         }
 
         public void SetCover(Music m, string fileName, string s)
@@ -433,20 +336,9 @@ namespace TagsEdit
                 }
             }
             //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
-            while (res!="yes") ;
+            while (res != "yes");
 
             m.SetCover(name);
-        }
-
-        private string Screen(string s)
-        {
-            var list = new List<char>();
-            for (var i = 0; i < s.Length; i++)
-                if (s[i] == '\\')
-                    list.Add('/');
-                else
-                    list.Add(s[i]);
-            return new string(list.ToArray());
         }
 
         public void SetCover(Music m, DirectoryInfo dir)
@@ -509,7 +401,6 @@ namespace TagsEdit
                 return "";
             }
         }
-
         private string SetName(Music m, string s)
         {
             if (properties["name"])
@@ -521,18 +412,92 @@ namespace TagsEdit
 
         private int SetYear(Music m)
         {
-            Console.Write("Год:  ");
-            var s = Console.ReadLine();
+            var s = "0";
             if (properties["year"])
+            {
+                Console.Write("Год:  ");
+                s = Console.ReadLine();
+                if (!new Regex(@"^[1|2][0|9|8|7][0-9]{2}$").IsMatch(s))
+                    return -1;
                 m.SetYear(s);
+            }
             else
                 m.SetYear("");
             return Int32.Parse(s);
         }
 
+
+
+
+
+
+
+
+
+        //Меняет "\" на "/", чтобы не было ошибок в регулярках при посике в пути
+        private string Screen(string s)
+        {
+            var list = new List<char>();
+            for (var i = 0; i < s.Length; i++)
+                if (s[i] == '\\')
+                    list.Add('/');
+                else
+                    list.Add(s[i]);
+            return new string(list.ToArray());
+        }
+
+        //Вспомогательные методы
         private DirectoryInfo GetDir(string s)
         {
             return directory == "" ? new DirectoryInfo(s) : new DirectoryInfo(directory);
+        }
+
+        //Возвращает название песни отбрасывая всё лишнее в имени файла, используется в режиме смарт
+        private string GetName(string s)
+        {
+            var start = 0;
+            var end = 0;
+            for (var i = 0; i < s.Length; i++)
+            {
+                if (s[i] == '—')
+                    start = i + 1;
+                if (s[i] == '-')
+                    start = i + 1;
+                if (s[i] == '.')
+                    if (s[i + 1] == 'm')
+                        if (s[i + 2] == 'p')
+                            if (s[i + 3] == '3')
+                                end = i;
+            }
+            var res = s.Substring(start, end - start);
+
+            if (res.Length > 1)
+                while ((res[0] == ' ') || (res[res.Length - 1] == ' '))
+                {
+                    if (res[0] == ' ')
+                        res = res.Substring(1, res.Length - 1);
+                    if (res[res.Length - 1] == ' ')
+                        res = res.Substring(0, res.Length - 1);
+                }
+
+            return res;
+        }
+
+        //Получается список слов из строки, нужно для главного меню (не меню)
+        private List<string> SelectWords(string s)
+        {
+            var words = new List<string>();
+            s += ' ';
+            var start = 0;
+            var end = 0;
+            for (var i = 0; i < s.Length; i++)
+                if (s[i] == ' ')
+                {
+                    end = i - 1;
+                    words.Add(s.Substring(start, end - start + 1).ToLower());
+                    start = i + 1;
+                }
+            return words;
         }
     }
 }
