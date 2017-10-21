@@ -76,81 +76,139 @@ namespace TagsEdit
 
         private void Add(string s)
         {
-            var list = new List<string>();
-            using (var reader = new StreamReader("config.txt", Encoding.UTF8))
-            {
-                while (!reader.EndOfStream)
-                    list.Add(reader.ReadLine());
-            }
-            for (var i = 0; i < list.Count; i++)
-                if (list[i] == "//" + s)
-                {
-                    list[i] = list[i].Substring(2, list[i].Length - 3);
-                    Console.Clear();
-                    Console.WriteLine("Готово!");
-                    using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
-                    {
-                        foreach (var j in list)
-                            writer.WriteLine(j);
-                    }
-                    return;
-                }
-            Console.Clear();
-            Console.WriteLine("Свойство не найдено");
+            //var list = new List<string>();
+            //using (var reader = new StreamReader("config.txt", Encoding.UTF8))
+            //{
+            //    while (!reader.EndOfStream)
+            //        list.Add(reader.ReadLine());
+            //}
+            //for (var i = 0; i < list.Count; i++)
+            //    if (list[i] == "//" + s)
+            //    {
+            //        list[i] = list[i].Substring(2, list[i].Length - 3);
+            //        Console.Clear();
+            //        Console.WriteLine("Готово!");
+            //        using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
+            //        {
+            //            foreach (var j in list)
+            //                writer.WriteLine(j);
+            //        }
+            //        return;
+            //    }
+            //Console.Clear();
+            //Console.WriteLine("Свойство не найдено");
         }
 
         private void Remove(string s)
         {
+            //var list = new List<string>();
+            //using (var reader = new StreamReader("config.txt", Encoding.UTF8))
+            //{
+            //    while (!reader.EndOfStream)
+            //        list.Add(reader.ReadLine());
+            //}
+            //for (var i = 0; i < list.Count; i++)
+            //{
+            //    if (list[i] == s)
+            //    {
+            //        list[i] = "//" + list[i];
+            //        Console.Clear();
+            //        Console.WriteLine("Всё готово!");
+            //        using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
+            //        {
+            //            foreach (var j in list)
+            //                writer.WriteLine(j);
+            //        }
+            //        return;
+            //    }
+            //    if (list[i] == "//" + s)
+            //    {
+            //        Console.Clear();
+            //        Console.WriteLine("Свойство и так удалено");
+            //        return;
+            //    }
+            //}
+            //Console.Clear();
+            //Console.WriteLine("Свойство не найдено");
+        }
+
+        private void Config()
+        {
+            Console.Clear();
+
+            //Получение списка свойств
             var list = new List<string>();
             using (var reader = new StreamReader("config.txt", Encoding.UTF8))
             {
                 while (!reader.EndOfStream)
                     list.Add(reader.ReadLine());
             }
-            for (var i = 0; i < list.Count; i++)
-            {
-                if (list[i] == s)
-                {
-                    list[i] = "//" + list[i];
-                    Console.Clear();
-                    Console.WriteLine("Всё готово!");
-                    using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
-                    {
-                        foreach (var j in list)
-                            writer.WriteLine(j);
-                    }
-                    return;
-                }
-                if (list[i] == "//" + s)
-                {
-                    Console.Clear();
-                    Console.WriteLine("Свойство и так удалено");
-                    return;
-                }                    
-            }
-            Console.Clear();
-            Console.WriteLine("Свойство не найдено");
-        }
-
-        private void Config()
-        {
-            List<string> options;
-            string path;
-            using (var reader = new StreamReader("config.txt", System.Text.Encoding.UTF8))
-            {
-                var list = new List<string>();
-                while (!reader.EndOfStream)
-                    list.Add(reader.ReadLine());
-                path = list[list.Count - 1];
-                list.Remove(path);
-                options = list;
-            }
-            Console.Clear();
-            Console.WriteLine("Список тэгов:");
-            foreach (var i in options)
+            var path = list[list.Count - 1];
+            list.Remove(path);
+            list[0] += "<";
+            foreach (var i in list)
                 Console.WriteLine(i);
-            Console.WriteLine();
-            Console.WriteLine("path\n{0}", path);
+
+            //Главный цикл
+            var current = 0;
+            while (1 < 2)
+            {
+                //Перемещение курсора
+                var key = Console.ReadKey();
+                if (key.Key == ConsoleKey.DownArrow)
+                    if (current < list.Count - 1)
+                    {
+                        current++;
+                        list[current] += "<";
+                        if (current > 0)
+                            if (list[current - 1][list[current - 1].Length - 1] == '<')
+                                list[current - 1] = list[current - 1].Substring(0, list[current - 1].Length - 1);
+                    }
+                if (key.Key == ConsoleKey.UpArrow)
+                    if (current > 0)
+                    {
+                        current--;
+                        list[current] += "<";
+                        if (current < list.Count - 1)
+                            if (list[current + 1][list[current + 1].Length - 1] == '<')
+                                list[current + 1] = list[current + 1].Substring(0, list[current + 1].Length - 1);
+                    }
+
+                //Комментируется свойство
+                if (key.Key == ConsoleKey.RightArrow)
+                    if (list[current][0] != '/')
+                        list[current] = "//" + list[current];
+
+                //Разкомментируется свойство
+                if (key.Key == ConsoleKey.LeftArrow)
+                    if (list[current][0] == '/')
+                    {
+                        list[current] = list[current].Substring(2, list[current].Length - 3);
+                        list[current] += "<";
+                    }
+
+                //Выход
+                if (key.Key == ConsoleKey.Enter)
+                {
+                    list[current] = list[current].Substring(0, list[current].Length - 1);
+                    break;
+                }
+
+                //Обновление
+                Console.Clear();
+                foreach (var i in list)
+                    Console.WriteLine(i);
+            }
+
+            //Запись в файл и завершение
+            list.Add(path);
+            using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
+            {
+                foreach (var i in list)
+                    writer.WriteLine(i);
+            }
+            Console.Clear();
+            Console.WriteLine("Всё готово!");
         }
 
         private void Smart(string s)
@@ -189,8 +247,20 @@ namespace TagsEdit
 
         private void SetDir(string s)
         {
-            //Сложно комментировать две строчки
+            var list = new List<string>();
+            using (var reader = new StreamReader("config.txt", Encoding.UTF8))
+            {
+                while (!reader.EndOfStream)
+                    list.Add(reader.ReadLine());
+            }
             directory = s;
+            list[list.Count - 1] = s;
+            using (var writer = new StreamWriter("config.txt", false, Encoding.UTF8))
+            {
+                foreach (var i in list)
+                    writer.WriteLine(i);
+            }
+            Console.Clear();
             Console.WriteLine("Директория задана");
         }
 
@@ -242,54 +312,52 @@ namespace TagsEdit
 
         private void One(string s)
         {
-            //Задаётся директория            
-            var dir = GetDir(s);
-
-            //Консоль
+            //Поиск файла
             Console.Clear();
-            Console.WriteLine("Режим редактирования одной песни\nХотите посмотреть список файлов?(y/n)");
-            if (Console.ReadLine().ToLower() == "y")
+            var dir = GetDir(s);
+            Console.Write("Название файла: ");
+            var name = Console.ReadLine();
+            var temp = name;
+            var res = "";
+            do
+            {
                 foreach (var i in dir.GetFiles())
-                    Console.WriteLine(i.Name);
-            Console.WriteLine("Введите название файла");
-
-            //Переменные
-            var nameOfFile = Console.ReadLine();
-            Music music;
-            string name;
-            string author;
-
-            //Поиск файла и редактирование его тэгов           
-            foreach (var i in dir.GetFiles())
-                if ((i.Name == nameOfFile) || (i.Name.Substring(0, i.Name.Length - 4) == nameOfFile))
                 {
-                    Console.Clear();
-                    Console.WriteLine("Файл найден");
-                    music = new Music();
-                    name = SetName(music);
-                    author = SetAuthor(music);
-                    SetAlbum(music);
-                    SetCover(music, dir);
-                    SetYear(music);
-                    music.SetPath(i.FullName);
-                    music.Save();
-
-                    var newPath = i.Directory + "/" + author + " - " + name + ".mp3";
-
-                    try
+                    //var sss = ;
+                    if (new Regex(Screen(name.ToLower())).IsMatch(Screen(i.Name.ToLower())))
                     {
-                        File.Move(i.FullName, newPath);
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Вы хотите сделать 2 одинаковых файла. Точное исключение: {0}", e);
-                        return;
+                        Console.WriteLine("Найден файл, полное имя: " + i.Name);
+                        name = i.FullName;
+                        Console.WriteLine("Правильно?");
+                        res = Console.ReadLine();
+                        break;
                     }
                 }
+                if (temp == name)
+                {
+                    Console.WriteLine("Файл не найден");
+                    return;
+                }
+            }
+            //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
+            while (res!="yes");
 
-            //Консоль
+            //Редактирование тэгов
+            var music = new Music();
+            var musicName = SetName(music);
+            var author = SetAuthor(music);
+            SetAlbum(music);
+            SetYear(music);
+            SetCover(music, name, s);
+            music.SetPath(name);
+            music.Save();
+
+            var newPath = dir.FullName + "/" + author + " - " + musicName + ".mp3";
+
+            File.Move(name, newPath);
+
             Console.Clear();
-            Console.WriteLine("Готово!");
+            Console.WriteLine("Всё готово!");
         }
 
         private List<string> SelectWords(string s)
@@ -337,6 +405,48 @@ namespace TagsEdit
                 }
 
             return res;
+        }
+
+        public void SetCover(Music m, string fileName, string s)
+        {
+            //Console.Clear();
+            var dir = GetDir(s);
+            Console.Write("Название картинки: ");
+            var name = Console.ReadLine();
+            var temp = name;
+            var res = "";
+            do
+            {
+                foreach (var i in dir.GetFiles())
+                    if (new Regex(name.ToLower()).IsMatch(Screen(i.Name.ToLower())))
+                    {
+                        Console.WriteLine("Найдена картинка, полное имя: " + i.Name);
+                        name = i.FullName;
+                        Console.WriteLine("Правильно?");
+                        res = Console.ReadLine();
+                        break;
+                    }
+                if (temp == name)
+                {
+                    Console.WriteLine("Картинка не найдена");
+                    return;
+                }
+            }
+            //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
+            while (res!="yes") ;
+
+            m.SetCover(name);
+        }
+
+        private string Screen(string s)
+        {
+            var list = new List<char>();
+            for (var i = 0; i < s.Length; i++)
+                if (s[i] == '\\')
+                    list.Add('/');
+                else
+                    list.Add(s[i]);
+            return new string(list.ToArray());
         }
 
         public void SetCover(Music m, DirectoryInfo dir)
