@@ -48,25 +48,28 @@ namespace TagsEdit
                 var name = Console.ReadLine();
                 var temp = name;
                 var res = "";
-                do
-                {
-                    foreach (var i in dir.GetFiles())
+                foreach (var i in dir.GetFiles())
+                    if ((new Regex(".png").IsMatch(i.Name)) || (new Regex(".jpg").IsMatch(i.Name)))
                         if (new Regex(Screen(name.ToLower())).IsMatch(Screen(i.Name.ToLower())))
                         {
                             Console.WriteLine("Найдена картинка, полное имя: " + i.Name);
                             name = i.FullName;
                             Console.WriteLine("Правильно?");
                             res = Console.ReadLine();
-                            break;
+                            if (res == "yes")
+                                break;
+                            else
+                            {
+                                Console.Clear();
+                                Console.WriteLine("Попробуйте ещё");
+                                return;
+                            }
                         }
-                    if (temp == name)
-                    {
-                        Console.WriteLine("Картинка не найдена");
-                        return;
-                    }
+                if (temp == name)
+                {
+                    Console.WriteLine("Картинка не найдена");
+                    return;
                 }
-                while (res != "yes");
-
                 this.cover = name;
             }
             else

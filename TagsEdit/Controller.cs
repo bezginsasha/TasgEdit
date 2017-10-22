@@ -61,7 +61,7 @@ namespace TagsEdit
                         Console.WriteLine(directory);
                         break;
                     case "help":
-                        Console.WriteLine("Help");
+                        Help();
                         break;
                     case "config":
                         Config();
@@ -73,6 +73,20 @@ namespace TagsEdit
                         break;
                 }
             }
+        }
+
+        private void Help()
+        {
+            Console.Clear();
+            Console.WriteLine("Список основных команд:\n");
+            Console.WriteLine("one - открывает режим редактирования одной песни. Сначала нужно ввести название файла, можно не целиком, а его часть, нажать Enter и вам будет предложен первый вариант из найденных (если их несколько). Если это он, введите «yes» и продолжите редактирование, если файл не найден или это найден не тот (для этого нужно ввести «no»), всё надо начать заново. Если всё хорошо, введите тэги, с обложкой нужно будет повторить то же, что с поиском файла\n");
+            Console.WriteLine("all –режим редактирование альбома. Сначала нужно ввести тэги, общие для всех песен альбома, включая обложку. А потом будет перебираться каждый файл в папке, и вам нужно будет ввести названия песен для них\n");
+            Console.WriteLine("smart – то же, что и all, только обложка выбирается как первая попавшаяся картинка (в идеале она должна быть одна), а название песни берётся из названия файла, то, что после тире (если оно есть) и перед .mp3. Потому что музыка обычно записывается как «исполнитель – название.mp3»\n");
+            Console.WriteLine("Важное замечаение – в любом из режимов файл переименовывается так, как показано в предыдущем пункте\n");
+            Console.WriteLine("setdir – задаётся папка, в которой и будет всё происходить\n");
+            Console.WriteLine("showdir – показывает папку\n");
+            Console.WriteLine("config – режим изменения тэгов. Чтобы перемещаться нажимайте на стрелочки на клавиатуре «вверх» и «вниз». Чтобы закомментировать тэг, нажмите на стрелочку «вправо», разкомментировать – «влево». Закомментированные тэги не будут отображаться при редактировании\n");
+            Console.WriteLine("help – открыть справку");
         }
 
         private void Config()
@@ -179,7 +193,7 @@ namespace TagsEdit
             foreach (var i in dir.GetFiles())
                 if (new Regex(".mp3").IsMatch(i.Name))
                 {
-                    var name = music.SetName(GetName(i.Name),properties["name"]);
+                    var name = music.SetName(GetName(i.Name), properties["name"]);
                     music.SetPath(i.FullName);
                     music.Save();
 
@@ -273,28 +287,29 @@ namespace TagsEdit
             var name = Console.ReadLine();
             var temp = name;
             var res = "";
-            do
+            foreach (var i in dir.GetFiles())
             {
-                foreach (var i in dir.GetFiles())
+                if (new Regex(Screen(name.ToLower())).IsMatch(Screen(i.Name.ToLower())))
                 {
-                    //var sss = ;
-                    if (new Regex(Screen(name.ToLower())).IsMatch(Screen(i.Name.ToLower())))
-                    {
-                        Console.WriteLine("Найден файл, полное имя: " + i.Name);
-                        name = i.FullName;
-                        Console.WriteLine("Правильно?");
-                        res = Console.ReadLine();
+                    Console.WriteLine("Найден файл, полное имя: " + i.Name);
+                    name = i.FullName;
+                    Console.WriteLine("Правильно?");
+                    res = Console.ReadLine();
+                    if (res == "yes")
                         break;
+                    else
+                    {
+                        Console.Clear();
+                        Console.WriteLine("Попробуйте ещё");
+                        return;
                     }
                 }
-                if (temp == name)
-                {
-                    Console.WriteLine("Файл не найден");
-                    return;
-                }
             }
-            //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
-            while (res != "yes");
+            if (temp == name)
+            {
+                Console.WriteLine("Файл не найден");
+                return;
+            }
 
             //Редактирование тэгов
             var music = new Music();
@@ -314,128 +329,12 @@ namespace TagsEdit
             Console.WriteLine("Всё готово!");
         }
 
-        //public void SetCover(Music m, string fileName, string s)
-        //{
-        //    //Console.Clear();
-        //    var dir = GetDir(s);
-        //    Console.Write("Название картинки: ");
-        //    var name = Console.ReadLine();
-        //    var temp = name;
-        //    var res = "";
-        //    do
-        //    {
-        //        foreach (var i in dir.GetFiles())
-        //            if (new Regex(name.ToLower()).IsMatch(Screen(i.Name.ToLower())))
-        //            {
-        //                Console.WriteLine("Найдена картинка, полное имя: " + i.Name);
-        //                name = i.FullName;
-        //                Console.WriteLine("Правильно?");
-        //                res = Console.ReadLine();
-        //                break;
-        //            }
-        //        if (temp == name)
-        //        {
-        //            Console.WriteLine("Картинка не найдена");
-        //            return;
-        //        }
-        //    }
-        //    //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
-        //    while (res != "yes");
 
-        //    m.SetCover(name);
-        //}
-
-        //public void SetCover(Music m, DirectoryInfo dir)
-        //{
-        //    var cover = "";
-        //    foreach (var i in dir.GetFiles())
-        //        if ((new Regex(".jpg").IsMatch(i.Name)) || (new Regex(".png").IsMatch(i.Name)))
-        //        {
-        //            cover = i.FullName;
-        //            break;
-        //        }
-        //    if (cover != "")
-        //        m.SetCover(cover);
-        //}
-
-        //private string SetAuthor(Music m)
-        //{
-        //    if (properties["author"])
-        //    {
-        //        Console.Write("Испонитель: ");
-        //        var s = Console.ReadLine();
-        //        m.SetAuthor(s);
-        //        return s;
-        //    }
-        //    else
-        //    {
-        //        m.SetAuthor("");
-        //        return "";
-        //    }
-        //}
-
-        //private string SetAlbum(Music m)
-        //{
-        //    if (properties["album"])
-        //    {
-        //        Console.Write("Альбом: ");
-        //        var s = Console.ReadLine();
-        //        m.SetAlbum(s);
-        //        return s;
-        //    }
-        //    else
-        //    {
-        //        m.SetAlbum("");
-        //        return "";
-        //    }
-        //}
-
-        //private string SetName(Music m)
-        //{
-        //    if (properties["name"])
-        //    {
-        //        Console.Write("Название: ");
-        //        var s = Console.ReadLine();
-        //        m.SetName(s);
-        //        return s;
-        //    }
-        //    else
-        //    {
-        //        m.SetName("");
-        //        return "";
-        //    }
-        //}
-        //private string SetName(Music m, string s)
-        //{
-        //    if (properties["name"])
-        //        m.SetName(s);
-        //    else
-        //        m.SetName("");
-        //    return s;
-        //}
-
-        //private int SetYear(Music m)
-        //{
-        //    var s = "0";
-        //    if (properties["year"])
-        //    {
-        //        Console.Write("Год:  ");
-        //        s = Console.ReadLine();
-        //        if (!new Regex(@"^[1|2][0|9|8|7][0-9]{2}$").IsMatch(s))
-        //            return -1;
-        //        m.SetYear(s);
-        //    }
-        //    else
-        //        m.SetYear("");
-        //    return Int32.Parse(s);
-        //}
-
-
-
-
-
-
-
+        ////////////////////////////////////////////////
+        //                                            //
+        //         ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ             //
+        //                                            //  
+        ////////////////////////////////////////////////
 
 
         //Меняет "\" на "/", чтобы не было ошибок в регулярках при посике в пути
@@ -450,7 +349,7 @@ namespace TagsEdit
             return new string(list.ToArray());
         }
 
-        //Вспомогательные методы
+        //Возвращает дирректорию
         private DirectoryInfo GetDir(string s)
         {
             return directory == "" ? new DirectoryInfo(s) : new DirectoryInfo(directory);
