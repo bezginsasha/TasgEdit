@@ -56,6 +56,10 @@ namespace TagsEdit
                     case "setdir":
                         SetDir(words[1]);
                         break;
+                    case "showdir":
+                        Console.Clear();
+                        Console.WriteLine(directory);
+                        break;
                     case "help":
                         Console.WriteLine("Help");
                         break;
@@ -162,20 +166,20 @@ namespace TagsEdit
 
             //Задаётся основа тэгов
             var music = new Music();
-            var author = SetAuthor(music);
-            SetAlbum(music);
-            if (SetYear(music) == -1)
+            var author = music.SetAuthor(properties["author"]);
+            music.SetAlbum(properties["album"]);
+            if (music.SetYear(properties["year"]) == -1)
             {
                 Console.WriteLine("Ошибка, введён некоректный год");
                 return;
             }
-            SetCover(music, dir);
+            music.SetCover(properties["cover"], dir);
 
             //Задаются индиидуальные теги и сохраняются изменения
             foreach (var i in dir.GetFiles())
                 if (new Regex(".mp3").IsMatch(i.Name))
                 {
-                    var name = SetName(music, GetName(i.Name));
+                    var name = music.SetName(GetName(i.Name),properties["name"]);
                     music.SetPath(i.FullName);
                     music.Save();
 
@@ -225,10 +229,10 @@ namespace TagsEdit
 
             //Задаются общие тэги
             var music = new Music();
-            var author = SetAuthor(music);
-            SetAlbum(music);
-            SetYear(music);
-            SetCover(music, dir);
+            var author = music.SetAuthor(properties["author"]);
+            music.SetAlbum(properties["album"]);
+            music.SetYear(properties["year"]);
+            music.SetCover(dir, properties["cover"]);
 
             //Задаются индивидуальные тэги
             Console.WriteLine("\nНазвания песен:");
@@ -238,7 +242,7 @@ namespace TagsEdit
                 if (new Regex(".mp3").IsMatch(i.Name))
                 {
                     Console.WriteLine("\nФайл: {0}", i.Name);
-                    var name = SetName(music);
+                    var name = music.SetName(properties["name"]);
                     music.SetPath(i.FullName);
                     music.Save();
 
@@ -250,7 +254,7 @@ namespace TagsEdit
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Вы хотите сделать 2 одинаковых файла. Точное исключение: {0}", e);
+                        Console.WriteLine("Вы хотите сделать 2 одинаковых файла");
                     }
                 }
             }
@@ -294,11 +298,11 @@ namespace TagsEdit
 
             //Редактирование тэгов
             var music = new Music();
-            var musicName = SetName(music);
-            var author = SetAuthor(music);
-            SetAlbum(music);
-            SetYear(music);
-            SetCover(music, name, s);
+            var musicName = music.SetName(properties["name"]);
+            var author = music.SetAuthor(properties["author"]);
+            music.SetAlbum(properties["album"]);
+            music.SetYear(properties["year"]);
+            music.SetCover(dir, properties["cover"]);
             music.SetPath(name);
             music.Save();
 
@@ -310,121 +314,121 @@ namespace TagsEdit
             Console.WriteLine("Всё готово!");
         }
 
-        public void SetCover(Music m, string fileName, string s)
-        {
-            //Console.Clear();
-            var dir = GetDir(s);
-            Console.Write("Название картинки: ");
-            var name = Console.ReadLine();
-            var temp = name;
-            var res = "";
-            do
-            {
-                foreach (var i in dir.GetFiles())
-                    if (new Regex(name.ToLower()).IsMatch(Screen(i.Name.ToLower())))
-                    {
-                        Console.WriteLine("Найдена картинка, полное имя: " + i.Name);
-                        name = i.FullName;
-                        Console.WriteLine("Правильно?");
-                        res = Console.ReadLine();
-                        break;
-                    }
-                if (temp == name)
-                {
-                    Console.WriteLine("Картинка не найдена");
-                    return;
-                }
-            }
-            //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
-            while (res != "yes");
+        //public void SetCover(Music m, string fileName, string s)
+        //{
+        //    //Console.Clear();
+        //    var dir = GetDir(s);
+        //    Console.Write("Название картинки: ");
+        //    var name = Console.ReadLine();
+        //    var temp = name;
+        //    var res = "";
+        //    do
+        //    {
+        //        foreach (var i in dir.GetFiles())
+        //            if (new Regex(name.ToLower()).IsMatch(Screen(i.Name.ToLower())))
+        //            {
+        //                Console.WriteLine("Найдена картинка, полное имя: " + i.Name);
+        //                name = i.FullName;
+        //                Console.WriteLine("Правильно?");
+        //                res = Console.ReadLine();
+        //                break;
+        //            }
+        //        if (temp == name)
+        //        {
+        //            Console.WriteLine("Картинка не найдена");
+        //            return;
+        //        }
+        //    }
+        //    //while ((new Regex(res.ToLower()).IsMatch("д") || (new Regex(res.ToLower()).IsMatch("y"))));
+        //    while (res != "yes");
 
-            m.SetCover(name);
-        }
+        //    m.SetCover(name);
+        //}
 
-        public void SetCover(Music m, DirectoryInfo dir)
-        {
-            var cover = "";
-            foreach (var i in dir.GetFiles())
-                if ((new Regex(".jpg").IsMatch(i.Name)) || (new Regex(".png").IsMatch(i.Name)))
-                {
-                    cover = i.FullName;
-                    break;
-                }
-            if (cover != "")
-                m.SetCover(cover);
-        }
+        //public void SetCover(Music m, DirectoryInfo dir)
+        //{
+        //    var cover = "";
+        //    foreach (var i in dir.GetFiles())
+        //        if ((new Regex(".jpg").IsMatch(i.Name)) || (new Regex(".png").IsMatch(i.Name)))
+        //        {
+        //            cover = i.FullName;
+        //            break;
+        //        }
+        //    if (cover != "")
+        //        m.SetCover(cover);
+        //}
 
-        private string SetAuthor(Music m)
-        {
-            if (properties["author"])
-            {
-                Console.Write("Испонитель: ");
-                var s = Console.ReadLine();
-                m.SetAuthor(s);
-                return s;
-            }
-            else
-            {
-                m.SetAuthor("");
-                return "";
-            }
-        }
+        //private string SetAuthor(Music m)
+        //{
+        //    if (properties["author"])
+        //    {
+        //        Console.Write("Испонитель: ");
+        //        var s = Console.ReadLine();
+        //        m.SetAuthor(s);
+        //        return s;
+        //    }
+        //    else
+        //    {
+        //        m.SetAuthor("");
+        //        return "";
+        //    }
+        //}
 
-        private string SetAlbum(Music m)
-        {
-            if (properties["album"])
-            {
-                Console.Write("Альбом: ");
-                var s = Console.ReadLine();
-                m.SetAlbum(s);
-                return s;
-            }
-            else
-            {
-                m.SetAlbum("");
-                return "";
-            }
-        }
+        //private string SetAlbum(Music m)
+        //{
+        //    if (properties["album"])
+        //    {
+        //        Console.Write("Альбом: ");
+        //        var s = Console.ReadLine();
+        //        m.SetAlbum(s);
+        //        return s;
+        //    }
+        //    else
+        //    {
+        //        m.SetAlbum("");
+        //        return "";
+        //    }
+        //}
 
-        private string SetName(Music m)
-        {
-            if (properties["name"])
-            {
-                Console.Write("Название: ");
-                var s = Console.ReadLine();
-                m.SetName(s);
-                return s;
-            }
-            else
-            {
-                m.SetName("");
-                return "";
-            }
-        }
-        private string SetName(Music m, string s)
-        {
-            if (properties["name"])
-                m.SetName(s);
-            else
-                m.SetName("");
-            return s;
-        }
+        //private string SetName(Music m)
+        //{
+        //    if (properties["name"])
+        //    {
+        //        Console.Write("Название: ");
+        //        var s = Console.ReadLine();
+        //        m.SetName(s);
+        //        return s;
+        //    }
+        //    else
+        //    {
+        //        m.SetName("");
+        //        return "";
+        //    }
+        //}
+        //private string SetName(Music m, string s)
+        //{
+        //    if (properties["name"])
+        //        m.SetName(s);
+        //    else
+        //        m.SetName("");
+        //    return s;
+        //}
 
-        private int SetYear(Music m)
-        {
-            var s = "0";
-            if (properties["year"])
-            {
-                Console.Write("Год:  ");
-                s = Console.ReadLine();
-                if (!new Regex(@"^[1|2][0|9|8|7][0-9]{2}$").IsMatch(s))
-                    return -1;
-                m.SetYear(s);
-            }
-            else
-                m.SetYear("");
-            return Int32.Parse(s);
-        }
+        //private int SetYear(Music m)
+        //{
+        //    var s = "0";
+        //    if (properties["year"])
+        //    {
+        //        Console.Write("Год:  ");
+        //        s = Console.ReadLine();
+        //        if (!new Regex(@"^[1|2][0|9|8|7][0-9]{2}$").IsMatch(s))
+        //            return -1;
+        //        m.SetYear(s);
+        //    }
+        //    else
+        //        m.SetYear("");
+        //    return Int32.Parse(s);
+        //}
 
 
 
