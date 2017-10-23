@@ -189,6 +189,9 @@ namespace TagsEdit
             }
             music.SetCover(properties["cover"], dir);
 
+            Console.Clear();
+            Console.WriteLine("5 сек...");
+
             //Задаются индиидуальные теги и сохраняются изменения
             foreach (var i in dir.GetFiles())
                 if (new Regex(".mp3").IsMatch(i.Name))
